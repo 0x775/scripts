@@ -1,0 +1,81 @@
+1: install composer
+https://www.phpcomposer.com/ 
+
+2: create project (version: 3.1.13)
+#composer create-project codeigniter/framework test
+
+3: 修改config.php文件
+要想使用 Composer，需要修改 application/config/config.php
+
+$config['composer_autoload'] = 'vendor/autoload.php';
+
+"""
+官方建议将 vendor 目录放在 application 目录中，项目迁移时复制整个 application 目录即可，比较方便。这时可以直接将上面的选项设置为 TRUE，CodeIgniter 框架会使用 application/vendor/autoload.php 这个默认路径。
+
+但我们刚才通过 Composer 命令将依赖包安装在了项目根目录下，所以要自行填入路径 vendor/autoload.php
+"""
+
+4: 运行测试服务器
+#php -S 0.0.0.0:8000 -t web_dir
+
+
+5:修改composer的源,使用国内源
+#vim composer.json ,增加
+
+"repositories": [
+        {
+            "type": "composer",
+            "url": "https://mirrors.aliyun.com/composer/"
+        },
+        {
+            "type": "composer",
+            "url": "https://mirrors.cloud.tencent.com/composer/"
+        }
+    ]
+
+
+6: test.composer (随便找个包测试下)
+#composer require firebase/php-jwt
+
+application/controllers/demo.php
+
+/*
+
+<?php
+defined('BASEPATH') OR exit('No direct script access allowed');
+
+use Firebase\JWT\JWT;
+use Firebase\JWT\Key;
+
+class Demo extends CI_Controller {
+
+	public function index()
+	{
+		echo "demo.index";
+	}
+
+	public function jwt(){
+		$key = 'example_key';
+		$payload = [
+			'iss' => 'http://example.org',
+			'aud' => 'http://example.com',
+			'iat' => 1356999524,
+			'nbf' => 1357000000
+		];
+ 
+		//编码 JWT
+		$jwt = JWT::encode($payload, $key, 'HS256');
+		echo "Encoded JWT: " . $jwt . "\n";
+ 
+		//解码 JWT
+		$decoded = JWT::decode($jwt, new Key($key, 'HS256'));
+		echo "Decoded JWT: \n";
+		print_r((array) $decoded);
+
+	}
+}
+
+*/
+
+访问 http://127.0.0.1:8000/demo/jwt
+
