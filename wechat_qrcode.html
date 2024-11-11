@@ -1,0 +1,69 @@
+一、注意：
+opencv-4.8.0之前的版本wechat_qrcode检测二维码是矩形检测；
+opencv-4.8.0+的版本wechat_qrcode检测二维码是关键点检测；
+
+二、C++代码
+代码目前是通用的（仅在opencv-4.5.5、opencv-4.8.1上测试过）：
+
+#include <iostream>
+#include <opencv2/opencv.hpp>
+#include <opencv2/wechat_qrcode.hpp>
+
+using namespace std;
+using namespace cv;
+
+int main() {
+    const std::string modelDir = "path/model";
+
+    cv::Ptr<cv::wechat_qrcode::WeChatQRCode> detector;
+    try {
+        detector = cv::makePtr<cv::wechat_qrcode::WeChatQRCode>(
+                modelDir + "/detect.prototxt",
+                modelDir + "/detect.caffemodel",
+                modelDir + "/sr.prototxt",
+                modelDir + "/sr.caffemodel"
+        );
+    }
+    catch (const std::exception &e) {
+        std::cout <<
+                  "\n---------------------------------------------------------------\n"
+                  "Failed to initialize WeChatQRCode.\n"
+                  "Please, download 'detector.*' and 'sr.*' from\n"
+                  "https://github.com/WeChatCV/opencv_3rdparty/tree/wechat_qrcode\n"
+                  "and put them into the current directory.\n"
+                  "---------------------------------------------------------------\n";
+        std::cout << e.what() << std::endl;
+        return 0;
+    }
+
+    std::vector<cv::Mat> vPoints;
+    std::vector<std::string> strDecoded;
+    cv::Mat img = cv::imread("/home/hy-20/workspace/CLionProjects/location_qr/data/图片1.jpg");
+
+    // 检测
+    strDecoded = detector->detectAndDecode(img, vPoints);
+
+    cout << "strDecoded.size() = " << strDecoded.size() << endl;
+    // 多个二维码
+    for (int i = 0; i < strDecoded.size(); i++) {
+        cout << "decode-" << i + 1 << ": " << strDecoded[i] << endl;
+        Point pt1 = Point((int) vPoints[i].at<float>(0, 0), (int) vPoints[i].at<float>(0, 1));
+        Point pt2 = Point((int) vPoints[i].at<float>(1, 0), (int) vPoints[i].at<float>(1, 1));
+        Point pt3 = Point((int) vPoints[i].at<float>(2, 0), (int) vPoints[i].at<float>(2, 1));
+        Point pt4 = Point((int) vPoints[i].at<float>(3, 0), (int) vPoints[i].at<float>(3, 1));
+        cout << pt1.x << " " << pt1.y << endl;
+        cout << pt2.x << " " << pt2.y << endl;
+        cout << pt3.x << " " << pt3.y << endl;
+        cout << pt4.x << " " << pt4.y << endl;
+
+        line(img, pt1, pt2, Scalar(0, 255, 0), 2);
+        line(img, pt2, pt3, Scalar(0, 0, 0), 2);
+        line(img, pt3, pt4, Scalar(0, 0, 255), 2);
+        line(img, pt4, pt1, Scalar(255, 0, 0), 2);
+        // putText(img, strDecoded[i], pt1, 0, 0.5, Scalar(255, 0, 0), 2);  // 中文显示问题
+    }
+    cv::resize(img, img, cv::Size(1000, 1000));
+    imshow("image", img);
+    cv::waitKey(0);
+}
+
