@@ -1,0 +1,76 @@
+﻿系统是ubuntu22.04
+前期安装
+#sudo apt-get install git-core gnupg flex bison build-essential zip curl zlib1g-dev gcc-multilib g++-multilib libc6-dev-i386 libncurses5 lib32ncurses5-dev x11proto-core-dev libx11-dev lib32z1-dev libgl1-mesa-dev libxml2-utils xsltproc unzip fontconfig python2 python3 libpcre3 libpcre3-dev libssl-dev
+
+注意：
+1： 需要jdk支持 
+#sudo apt-get install openjdk-8-jdk
+
+2：如果编译的是7.0的版本，需要python2支持，python3会报错;执行下面命令优先使用python2
+#sudo update-alternatives --config python
+如果出现 出现：update-alternatives: error: no alternatives for python
+#sudo update-alternatives --install /usr/bin/python python /usr/bin/python2.7 1
+#sudo update-alternatives --install /usr/bin/python python /usr/bin/python3.10 2
+
+
+//下载repo工具
+#curl https://mirrors.tuna.tsinghua.edu.cn/git/git-repo -o /usr/local/bin/repo
+#chmod +x /usr/local/bin/repo
+
+//创建soap文件件
+#mkdir ~/aosp  && cd ~/aosp
+
+设置这个url，要不然从国外url下载很慢并且容易断开
+#export REPO_URL='https://mirrors.tuna.tsinghua.edu.cn/git/git-repo'
+
+初始化，并设置取 分支 7.0 的系统
+#repo init -u https://mirrors.tuna.tsinghua.edu.cn/git/AOSP/platform/manifest -b android-7.0.0_r1
+(7.1的 -b android-7.1.0_r7)
+
+同步
+/* repo sync */  		(这个同步耗时2小时,占用空间 260G)
+#repo sync -j4 -c --no-tags	(这个同步耗时30分钟,占用空间 50G)
+
+-j4：使用 4 个线程并行下载，提高同步速度
+-c：仅同步当前分支，减少不必要的分支同步，节省带宽和存储
+--no-tags：不下载标签信息，进一步加快同步速度，节省存储空间
+
+
+//注意，查看版本编号，可以找自己想要的版本号
+#cd aosp && cd .repo/manifests.git && git branch -av | grep android-7 
+
+
+
+---------------------------------------------
+
+
+3：开始编译
+#export LC_ALL=C
+
+#source build/envsetup.sh
+
+#lunch	(测试的时候我默认选的第一个)
+#make -j4
+
+#启动模拟器
+#emulator
+
+
+
+
+//
+报错
+
+1: 使用中文ubuntu，在命令行中编译报错 target Java: core-all
+解决方案：
+export LC_ALL=C，并清理out目录内容，重新编译即可
+
+
+2:报错 SSL error when connecting to the Jack server. Try 'jack-diagnose'
+解决：
+删除/etc/java-8-openjdk/security/java.security 文件里 704行左右 的 TLSv1, TLSv1.1
+
+重新启动Jack-server：
+aosp目录
+./prebuilts/sdk/tools/jack-admin kill-server 
+./prebuilts/sdk/tools/jack-admin start-server
