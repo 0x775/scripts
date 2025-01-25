@@ -15,3 +15,52 @@ https://learnku.com/docs/laravel/6.x/releases/5121
 
 运行
 #php artisan serve
+
+-----------------------------
+修改自动路由 routers/web.php
+
+//自动路由
+Route::any('/{module}/{controller}/{action}', function($module,$class,$action) {
+    $controller = "App\\Http\\Controllers\\$module\\" .ucfirst(strtolower($class)).'Controller';
+    //echo $controller;
+    //print_r($_SERVER);
+    return app()->call($controller.'@'.$action);
+})->where('controller', '.*');
+
+
+
+
+Route::group(['namespace' => 'Web'], function () {
+	Route::get('/', 'IndexController@index'); 
+	Route::get('/list', 'IndexController@lists'); 
+	Route::get('/news/info', 'NewsController@info'); 
+	//购物车
+	Route::get('/cart', 'CartController@index'); 
+	Route::get('/checkout', 'CartController@checkout');
+
+    //pages
+	Route::get('/pages', 'PageController@index');
+});
+
+
+
+Route::group(['prefix'=>'member','namespace' => 'Web'], function () {
+	Route::match(['get','post'],'/login', 'MemberController@login'); 
+	Route::match(['get','post'],'/register', 'MemberController@register');
+	Route::get('/forgot', 'MemberController@forgot');
+	//Route::post('/register', 'MemberController@postRegister');
+	//Route::post('/login', 'MemberController@postLogin');
+	
+	Route::group(['middleware'=>'MemberAuth'], function(){
+		Route::get('/', 'MemberController@index');
+		Route::get('/profile', 'MemberController@profile');
+		Route::get('/coupon', 'MemberController@coupon');      
+	});
+	
+});
+
+
+Route::group(['prefix'=>'pay','namespace' => 'Web'], function () {
+	Route::get('/paypal', 'PayController@pay');
+	Route::get('/paypal/callback', 'PayController@Callback');
+});
