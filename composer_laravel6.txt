@@ -16,6 +16,9 @@ https://learnku.com/docs/laravel/6.x/releases/5121
 运行
 #php artisan serve
 
+4: 运行测试服务器<可选>
+#php -S 0.0.0.0:8000 -t web_dir
+
 数据库.redis等配置信息修改根目录.env文件
 
 -----------------------------
