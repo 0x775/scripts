@@ -16,15 +16,25 @@ https://learnku.com/docs/laravel/6.x/releases/5121
 运行
 #php artisan serve
 
+数据库.redis等配置信息修改根目录.env文件
+
 -----------------------------
 修改自动路由 routers/web.php
 
-//自动路由
-Route::any('/{module}/{controller}/{action}', function($module,$class,$action) {
-    $controller = "App\\Http\\Controllers\\$module\\" .ucfirst(strtolower($class)).'Controller';
+//自动路由3级
+Route::any('/{module}/{controller}/{action}', function ($module, $class, $action) {
+    $controller = "App\\Http\\Controllers\\$module\\" . ucfirst(strtolower($class)) . 'Controller';
     //echo $controller;
     //print_r($_SERVER);
-    return app()->call($controller.'@'.$action);
+    return app()->call($controller . '@' . $action);
+})->where('controller', '.*');
+
+//自动路由2级
+Route::any('/{controller}/{action}', function ($class, $action) {
+    $controller = "App\\Http\\Controllers\\" . ucfirst(strtolower($class)) . 'Controller';
+    //echo $controller;
+    //print_r($_SERVER);
+    return app()->call($controller . '@' . $action);
 })->where('controller', '.*');
 
 
