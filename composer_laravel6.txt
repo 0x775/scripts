@@ -1,7 +1,17 @@
-#composer.phar create-project --prefer-dist laravel/laravel blog "6.*"
-
 中文手册
 https://learnku.com/docs/laravel/6.x/releases/5121
+
+创建项目
+#composer.phar create-project --prefer-dist laravel/laravel appProject "6.*"
+
+更改composer国内镜像
+#修改项目中的composer.json文件：
+"repositories": {
+    "packagist": {
+    "type": "composer",
+    "url": "https://mirrors.aliyun.com/composer/"      
+    }  
+}
 
 运行
 #php artisan serve
