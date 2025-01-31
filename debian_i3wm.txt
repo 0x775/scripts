@@ -41,3 +41,7 @@ exec --no-startup-id fcitx &
 2.4 在桌面右下角右键，点击configure，上面选择Addon
 下面找到sunpinyin， 勾选上，然后input method 中就能看到拼音-chinese; 
 完成， 中英文切换 ctrl + space
+
+###############################
+待测试
+文件管理器: pcmanfm
