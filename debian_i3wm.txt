@@ -15,6 +15,9 @@ mod键+v，表示下一次在当前窗口下方打开终端。
 mod键+d，可以打开dmenu，会在屏幕顶部打开一个“启动器”，键入命令的同时后方会自动显示可用的命令，这里可以使用tab补全。
 mod键+shift+空格，使窗口浮动
 mod键+shift+q，关闭窗口
+活动窗口最大化 mod+f
+退出i3wm  mod +Shift +e
+打开某个软件， mod+d ，然后输入软件的名称。例如： firefox-esr、virt-manager 、fcitx
 mod+1.2.3. 却换工作区域
 
 
