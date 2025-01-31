@@ -1,0 +1,40 @@
+debian11 最小安装系统后，重启
+
+#apt-get update
+#apt install xorg fonts-wqy-microhei
+#apt install i3 sakura lightdm ttf-wqy-zenhei
+#reboot
+
+
+---------
+重启后，默认回车生成i3配置文件， win键为mod位
+默认的几个快捷键
+mod键+回车，打开新的终端。
+mod键+h，表示下一次在当前窗口右侧打开终端，
+mod键+v，表示下一次在当前窗口下方打开终端。
+mod键+d，可以打开dmenu，会在屏幕顶部打开一个“启动器”，键入命令的同时后方会自动显示可用的命令，这里可以使用tab补全。
+mod键+shift+空格，使窗口浮动
+mod键+shift+q，关闭窗口
+mod+1.2.3. 却换工作区域
+
+
+
+1:安装firefox
+#apt install firefox-esr  
+
+2:安装fcitx
+#apt install fcitx-sunpinyin fcitx-pinyin
+2.1 在/etc/X11/Xsession.options最后增加
+export GTK_IM_MODULE=fcitx
+export QT_IM_MODULE=fcitx
+export XMODIFIERS="@im=fcitx"
+
+2.2  在 ~/.config/i3/config 最后增加
+exec --no-startup-id fcitx &
+
+2.3重启系统,然后
+#im-config 选择fcitx
+
+2.4 在桌面右下角右键，点击configure，上面选择Addon
+下面找到sunpinyin， 勾选上，然后input method 中就能看到拼音-chinese; 
+完成， 中英文切换 ctrl + space
