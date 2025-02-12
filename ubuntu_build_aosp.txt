@@ -23,9 +23,12 @@
 设置这个url，要不然从国外url下载很慢并且容易断开
 #export REPO_URL='https://mirrors.tuna.tsinghua.edu.cn/git/git-repo'
 
-初始化，并设置取 分支 7.0 的系统
+初始化，并设置取 分支 7.0 的系统 (10版本 android-10.0.0_r41)
+(在线查找版本: https://source.android.com/docs/setup/about/build-numbers?hl=zh-cn#source-code-tags-and-builds)
+
 #repo init -u https://mirrors.tuna.tsinghua.edu.cn/git/AOSP/platform/manifest -b android-7.0.0_r1
 (7.1的 -b android-7.1.0_r7)
+
 
 同步
 /* repo sync */  		(这个同步耗时2小时,占用空间 260G)
