@@ -1,0 +1,16 @@
+使用docker搭建
+https://github.com/Lozy/danted
+
+1:准备
+#docker pull lozyme/sockd 	(如果服务器docker网不好,本地代理下载好然后导入到服务器上去,11MB)
+#mkdir -p /opt/danted
+#touch /opt/danted/sockd.passwd
+
+2: 运行镜像容器
+#docker run --name mydante -p 8080:2020  -v /opt/danted/sockd.passwd:/home/danted/conf/sockd.passwd  -d lozyme/sockd
+
+3: 设置密码
+#docker exec mydante script/pam add demo 123456
+
+4:客户机测试
+#curl -v --socks5 demo:123456@11.133.xxx.xxx:8080 cip.cc
