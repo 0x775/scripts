@@ -1,0 +1,59 @@
+FROM mcr.microsoft.com/playwright/python:v1.52.0-noble
+
+# 设置更高的默认分辨率
+ENV SCREEN_SIZE=1280x1024x24
+
+# 安装必要组件 - 包含 x11vnc 的完整版本
+RUN apt-get update && apt-get install -y \
+    xvfb \
+    x11vnc \
+    fluxbox \
+    xterm \
+    novnc \
+    websockify \
+    net-tools \
+    tightvncserver \ 
+    # 添加媒体支持库
+    #libgstreamer-plugins-base1.0-0 \
+    #libgstreamer1.0-0 \
+    #gstreamer1.0-plugins-good \
+    #gstreamer1.0-plugins-bad \
+    #gstreamer1.0-plugins-ugly \
+    #gstreamer1.0-libav \
+    #libnss3 \
+    #libxss1 \
+    #libasound \
+    #libva2 \
+    #libva-drm2 \
+    #libva-x11-2 \
+    #va-driver-all \
+    #vdpau-driver-all \
+    #libavcodec-extra \
+    #fonts-noto-cjk \
+    #fonts-noto-color-emoji \
+    # 添加 Widevine CDM 支持
+    #libwidevinecdm0 \
+    && rm -rf /var/lib/apt/lists/*
+
+# 确保 Playwright 安装
+#RUN pip install --upgrade pip && \
+RUN pip install playwright -i https://mirrors.aliyun.com/pypi/simple
+
+# 安装浏览器
+RUN playwright install
+
+# 创建正确的 noVNC 目录结构
+RUN ln -s /usr/share/novnc/vnc.html /usr/share/novnc/index.html
+
+# 设置 VNC 密码 - 使用 x11vnc 的 -storepasswd 选项
+RUN mkdir -p /root/.vnc && \
+    x11vnc -storepasswd playwright /root/.vnc/passwd && \
+    chmod 600 /root/.vnc/passwd
+
+# 复制启动脚本
+COPY start.sh /start.sh
+RUN chmod +x /start.sh
+
+EXPOSE 5900 6080
+
+CMD ["/start.sh"]
