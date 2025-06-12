@@ -1,0 +1,1 @@
+docker build -t debian-i3-dev .

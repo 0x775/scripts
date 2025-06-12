@@ -1,0 +1,82 @@
+# 使用Debian最新稳定版（Bookworm）的精简版作为基础
+FROM debian:bookworm-slim
+
+# 设置环境变量
+ENV TZ=Asia/Shanghai \
+    LANG=zh_CN.UTF-8 \
+    LC_ALL=zh_CN.UTF-8 \
+    DISPLAY=:1 \
+    RESOLUTION=1920x1080x24 \
+    VNC_PASSWORD=devpass
+
+# 安装系统基础组件和中文本地化
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    locales tzdata ca-certificates \
+    fonts-wqy-zenhei fonts-noto-cjk \
+    && echo "zh_CN.UTF-8 UTF-8" >> /etc/locale.gen \
+    && locale-gen zh_CN.UTF-8 \
+    && ln -fs /usr/share/zoneinfo/$TZ /etc/localtime \
+    && dpkg-reconfigure -f noninteractive tzdata \
+    && rm -rf /var/lib/apt/lists/*
+
+# 安装核心组件：i3wm + X11 + VNC + 开发工具 + 中文输入法
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    # X11基础
+    xserver-xorg-core xserver-xorg-video-dummy xinit xauth \
+    # i3wm窗口管理器及其依赖
+    i3-wm i3status i3lock suckless-tools dunst rofi \
+    # VNC服务器
+    tightvncserver \
+    # 终端和基础工具
+    xterm rxvt-unicode tmux git curl wget \
+    # Python和Go开发基础
+    python3 python3-pip python3-venv \
+    golang-go \
+    # 中文输入法
+    fcitx5 fcitx5-pinyin fcitx5-frontend-gtk3 fcitx5-frontend-qt5 \
+    # 文件管理
+    thunar \
+    # 清理缓存
+    && rm -rf /var/lib/apt/lists/*
+
+# 创建非root用户（避免权限问题）
+RUN useradd -m -s /bin/bash developer && \
+    echo "developer ALL=(ALL) NOPASSWD:ALL" >> /etc/sudoers
+
+# 配置i3wm（基础配置）
+RUN mkdir -p /home/developer/.config/i3 && \
+    echo "# i3基础配置\n\
+    font pango:Noto Sans CJK SC 10\n\
+    floating_modifier Mod1\n\
+    bindsym Mod1+Return exec urxvt\n\
+    bindsym Mod1+d exec rofi -show drun\n\
+    bindsym Mod1+Shift+q kill\n\
+    bar {\n\
+        status_command i3status\n\
+        position top\n\
+    }\n\
+    exec --no-startup-id fcitx5 -d\n\
+    exec --no-startup-id dunst\n" > /home/developer/.config/i3/config
+
+# 配置VNC和X启动脚本
+COPY vnc-start.sh /usr/local/bin/
+RUN chmod +x /usr/local/bin/vnc-start.sh
+
+# 配置fcitx输入环境
+RUN echo "export GTK_IM_MODULE=fcitx\n\
+export QT_IM_MODULE=fcitx\n\
+export XMODIFIERS=@im=fcitx\n\
+export LANG=zh_CN.UTF-8" >> /home/developer/.bashrc
+
+# 设置用户权限
+RUN chown -R developer:developer /home/developer
+
+# 切换到非root用户
+USER developer
+WORKDIR /home/developer
+
+# 暴露VNC端口
+EXPOSE 5901
+
+# 启动容器时运行VNC
+CMD ["vnc-start.sh"]
