@@ -8,7 +8,7 @@ services:
     network_mode: "host"
     volumes:
       - ./hbbs:/root
-    command: hbbs -r 101.133.147.45
+    command: hbbs -r 您的服务器IP地址
 
   hbbr:
     image: rustdesk/rustdesk-server
