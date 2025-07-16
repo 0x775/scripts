@@ -1,3 +1,10 @@
+iOS实现注入动态库的几种方式
+第一种：越狱，写插件，注入springboard生效；
+第二种：越狱，Frida注入，运行时生效；
+第三种：非越狱，重打包，设置DYLD_INSERT_LIBRARIES环境变量；
+第四种：非越狱，巨魔，TrollFools注入；
+
+
 Appsdump4
 trollfools
 轻松签+
