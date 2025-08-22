@@ -1,0 +1,31 @@
+version: "3"
+services:
+  windows:
+    image: dockurr/windows
+    container_name: windows
+    devices:
+      - /dev/kvm  # 传递 KVM 设备以启用硬件加速（如果可用且需要）
+      - /dev/net/tun
+    cap_add:
+      - NET_ADMIN
+    ports:
+      - 8006:8006  # noVNC Web 访问端口
+      - 3389:3389/tcp  # RDP 端口
+      - 3389:3389/udp
+    volumes:
+      - ./windows:/storage
+      - ./data:/data
+    environment:
+      USER: "vnc"
+      PASS: "123458A" #VNC密码
+      RAM_SIZE: "2G"    # 分配内存大小
+      CPU_CORES: "2"    # 分配 CPU 核心数
+      DISK_SIZE: "20G"
+      VERSION: "xp"  # 指定 Windows 版本，如 win10 Pro(10), Windows 10 LTSC(10l), Windows 10 Enterprise(10e) win7 (7u), Winxp(xp), Win2000(2k)等:cite[8]
+      USERNAME: "apple" #登录账号
+      PASSWORD: "123458A" #登录密码
+      # KVM: "N"       # 如果宿主机不支持 KVM，则强制禁用（性能会下降）
+    stop_grace_period: 2m
+    restart: unless-stopped
+# 注意：如果宿主机不支持 KVM，请注释掉 'devices' 部分，并取消对 'KVM: "N"' 的注释。
+# https://github.com/dockur/windows
