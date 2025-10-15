@@ -1,0 +1,230 @@
+﻿<!-- show.htm -->
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8" />
+  <title>商品数据查看</title>
+  <style>
+    body { font-family: Arial, sans-serif; background: #f9f9f9; margin: 0; }
+    .section { background: white; padding: 6px; margin-bottom: 6px; }
+    .form-row { margin: 10px 0; display: flex; align-items: center;overflow: hidden; }
+    label { width: 100px; font-weight: bold; }
+    input { padding: 6px; flex: 1; }
+    .image-preview { max-height: 200px; margin: 8px 0; }
+    .image-preview img { max-width: 100%; max-height: 120px; border-radius: 4px; }
+    .image-list { display: flex; gap: 8px; overflow-x: auto; padding: 8px 0; }
+    .image-list img { height: 100px; object-fit: cover; border-radius: 4px; flex: none; }
+    .content-box {
+  background: #fafafa;
+  padding: 12px;
+  border-radius: 4px;
+  margin-top: 10px;
+  height: 200px; /* 固定高度 */
+  overflow-y: auto; /* 垂直滚动 */
+}
+.content-scroll {
+  padding-bottom: 20px; /* 防止最后一张图被裁 */
+}
+.content-box img {
+  max-width: 100%;
+  margin: 8px 0;
+  border-radius: 4px;
+}
+    .sku-row { display: flex; align-items: center; padding: 8px 0; border-bottom: 1px solid #eee; }
+    .sku-header {
+  display: flex;
+  padding: 8px 0;
+  border-bottom: 2px solid #ddd;
+  font-weight: bold;
+}
+.sku-header > div {
+  display: flex;
+  align-items: center;
+}
+/* 保持与 .sku-row 一致的 flex 比例 */
+.sku-label { flex: 2; }
+.sku-price { flex: 1; }
+.sku-normal { flex: 1; }
+#toast {
+    position: fixed;
+    top: 16px;
+    left: 50%;
+    transform: translateX(-50%);
+    padding: 12px 24px;
+    border-radius: 6px;
+    color: white;
+    font-weight: bold;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.3s;
+    z-index: 10000;
+	width: 260px;
+    text-align: center;
+}
+#toast.show {
+    opacity: 1;
+    pointer-events: auto;
+}
+#toast.success { background-color: #10b981; } /* green-500 */
+#toast.error { background-color: #ef4444; }   /* red-500 */
+  </style>
+</head>
+<body>
+  <div id="app">
+    <!-- 基础信息（仅标题、销量、评论可编辑） -->
+    <div class="section">
+      <div class="form-row"><label>标题：</label><input v-model="info.title" /></div>
+      <div class="form-row"><label>销量：</label><input v-model="info.saleNum" /></div>
+      <div class="form-row"><label>评论数：</label><input v-model="info.commentNum" /></div>
+	  <div class="form-row"><label>店铺名：</label>{{ info.shopName }}</div>
+
+	  <!-- SKU 列表 -->
+<div class="section">
+  <h3>SKU 信息</h3>
+  <!-- 标题行 -->
+  <div class="sku-header">
+    <div class="sku-label"><strong>规格组合</strong></div>
+    <div class="sku-price"><strong>售价</strong></div>
+    <div class="sku-normal"><strong>原价</strong></div>
+  </div>
+  <!-- 数据行 -->
+  <div v-for="(sku, idx) in info.skuList.combinations" :key="idx" class="sku-row">
+    <div class="sku-label">
+      {{ getSpecText(sku.specIds) }}
+      <div v-if="sku.image" style="margin-top: 6px;">
+        <img :src="sku.image" style="height: 40px; object-fit: cover; border-radius: 3px;" />
+      </div>
+    </div>
+    <div class="sku-price">
+      <input v-model="sku.price" placeholder="售价" style="width: 60px;" />
+    </div>
+    <div class="sku-normal">
+      <input v-model="sku.normalPrice" placeholder="原价" style="width: 60px;" />
+    </div>
+  </div>
+</div>
+
+	 <!--<div class="form-row"><label>封面图：</label></div>
+      <div class="image-preview">
+        <img :src="info.image" v-if="info.image" />
+      </div>
+
+      <div class="form-row"><label>店铺Logo：</label></div>
+      <div class="image-preview">
+        <img :src="info.shopLogo" v-if="info.shopLogo" style="max-height: 60px;" />
+      </div>-->
+
+      
+      <!--<div class="form-row"><label>视频：</label>{{ info.video || '—' }}</div>-->
+    </div>
+
+    <!-- 幻灯图（只读，可滑动） -->
+    <div class="section">
+      <div class="form-row"><label>幻灯图：</label></div>
+      <div class="image-list">
+        <img v-for="(url, idx) in info.imageList" :key="idx" :src="url" v-if="url" />
+      </div>
+    </div>
+
+    <!-- 详情内容（文本 + 图片） -->
+    <div class="section">
+  <div class="form-row"><label>详情内容：</label></div>
+  <div class="content-box">
+    <div class="content-scroll">
+      <p>{{ info.content.text || '' }}</p>
+      <img v-for="(img, idx) in info.content.images" :key="idx" :src="img" v-if="img" />
+      <p v-if="info.content.video">视频: {{ info.content.video }}</p>
+    </div>
+  </div>
+</div>  
+
+    <!-- 保存按钮 -->
+    <button style="position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%); padding: 12px 30px; font-size: 16px; background: #e02e24; color: white; border: none; border-radius: 6px; cursor: pointer;" @click="save">
+      💾 保存数据
+    </button>
+  </div>
+
+  <script src="https://cdn.jsdelivr.net/npm/vue@2.7.16/dist/vue.min.js"></script>
+  <script>
+    new Vue({
+      el: '#app',
+      data() {
+        return {
+          info: {
+            title: '',
+            saleNum: '',
+            commentNum: '',
+            image: '',
+            imageList: [],
+            shopName: '',
+            shopLogo: '',
+            video: '',
+            content: { text: '', images: [], video: '' },
+            skuList: { combinations: [] }
+          }
+        };
+      },
+      mounted() {
+        window.addEventListener('message', (e) => {
+          if (e.data.type === 'INIT_PRODUCT_DATA') {
+			  console.log("---->>>>");
+			  
+            this.info = e.data.data;
+			//alert(JSON.stringify(this.info));
+          }
+        });
+      },
+      methods: {
+        getSpecText(specIds) {
+          const texts = [];
+          specIds.forEach(id => {
+            for (const spec of this.info.skuList.specs || []) {
+              const val = spec.values.find(v => v.id === id);
+              if (val) {
+                texts.push(val.title);
+                break;
+              }
+            }
+          });
+          return texts.join(' / ') || '—';
+        },
+        save() {
+          //alert('✅ 数据已提交');
+		  //alert(JSON.stringify(this.info));
+		  const toast = document.getElementById('toast');
+
+           if(this.info.skuList.combinations.length == 0){
+			   toast.textContent = '❌ 失败: sku数据未获得!';
+				toast.className = 'show error';
+				setTimeout(() => toast.classList.remove('show'), 2500);
+				return;
+		   }
+
+        // 发送数据
+        fetch('http://127.0.0.1:8787/api/import/pinduoduo', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(this.info)
+        })
+        .then(r => r.json())
+        .then(res => {
+			if (res.retcode !== 200) {
+				throw new Error('Request failed with retcode: ' + res.retcode);
+			}
+            toast.textContent = '✅ 保存成功！';
+            toast.className = 'show success';
+            setTimeout(() => toast.classList.remove('show'), 2500);
+        })
+        .catch(err => {
+            toast.textContent = '❌ 保存失败';
+            toast.className = 'show error';
+            setTimeout(() => toast.classList.remove('show'), 2500);
+        });
+		}
+      }
+    });
+  </script>
+  <div id="toast"></div>
+</body>
+</html>
