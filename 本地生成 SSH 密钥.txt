@@ -1,0 +1,84 @@
+目标
+在本地生成 SSH 密钥对（私钥 + 公钥）
+将公钥上传到远程服务器的 ~/.ssh/authorized_keys
+验证是否能免密 SSH 登录
+让 Git 能通过 SSH 免密 push 到你的 Git 仓库
+
+在Win10系统下使用的是mingw64 
+#ssh-keygen -t ed25519 -C "your_email@example.com"
+如果提示 ed25519 不支持（极少见），改用：
+#ssh-keygen -t rsa -b 4096 -C "your_email@example.com"
+操作提示：
+Enter file in which to save the key: 直接回车（默认 ~/.ssh/id_ed25519）
+Enter passphrase (empty for no passphrase): 直接回车（留空！）
+→ 这样私钥才不会每次使用都要求输密码
+✅ 完成后你会看到：
+Your identification has been saved in /c/Users/YourName/.ssh/id_ed25519
+Your public key has been saved in /c/Users/YourName/.ssh/id_ed25519.pub
+
+第二步：把公钥传到服务器（只需一次）
+方法 A：用 ssh-copy-id（如果可用，Git Bash 支持）
+#ssh-copy-id -i ~/.ssh/id_ed25519.pub user@server_ip
+它会自动创建 ~/.ssh 目录、设置权限，并追加公钥到 authorized_keys。
+会提示你输入一次密码，之后就免密了。
+
+方法 B：手动上传（兼容所有环境）
+如果你的 Git Bash 没有 ssh-copy-id，用以下命令：
+# 读取公钥内容并追加到服务器
+#cat ~/.ssh/id_ed25519.pub | ssh user@server_ip "mkdir -p ~/.ssh && chmod 700 ~/.ssh && cat >> ~/.ssh/authorized_keys && chmod 600 ~/.ssh/authorized_keys"
+🔐 这条命令会：
+创建 ~/.ssh 目录（如果不存在）
+设置正确权限（SSH 要求严格权限，否则拒绝加载）
+把你的公钥追加到 authorized_keys
+设置 authorized_keys 权限为 600
+
+🔍 第三步：测试免密 SSH 登录
+#ssh user@server_ip
+✅ 如果直接登录成功，没有提示输入密码，说明配置成功！
+
+💡 如果失败，常见原因：
+服务器 ~/.ssh 或 authorized_keys 权限不对（必须是 700 和 600）
+服务器 /etc/ssh/sshd_config 中 PubkeyAuthentication 被禁用（但绝大多数 Linux 默认开启）
+SELinux 或防火墙干扰（较少见）
+
+🔄 第四步：确保 Git 使用这个 SSH 密钥
+检查你的 Git remote URL 是否是 SSH 格式：
+应该类似：
+origin  ssh://user@server_ip/path/to/repo.git (fetch)
+origin  ssh://user@server_ip/path/to/repo.git (push)
+如果不是，改成 SSH 格式：
+#git remote set-url origin ssh://user@server_ip/full/path/to/your/repo.git
+⚠️ 注意：路径要是服务器上的绝对路径，例如：
+ssh://git@192.168.1.100/home/git/myproject.git
+
+🧪 第五步：测试 Git push（免密）
+#git add .
+#git commit -m "test"
+#git push origin backup/auto-save
+✅ 如果没有提示输入密码，并且推送成功，大功告成！
+
+🧹 补充：如果遇到权限问题（服务器端）
+登录服务器，手动检查权限：
+#确保 ~/.ssh 所属用户是你自己（不是 root）。
+
+
+=========================
+另外创建git自动备份数据流程
+只需要一次
+
+# 创建并切换到备份分支（名字可自定义）
+#git checkout -b backup/auto-save
+
+# 推送到远程（首次）
+#git push -u origin backup/auto-save
+
+# 切回你的工作分支（比如 main）
+#git checkout main
+说明：backup/auto-save 是一个合法的分支名（Git 支持 /，会被视为层级命名，但本质仍是普通分支）
+
+后期清理：一键删除备份分支
+# 删除本地备份分支
+#git branch -d backup/auto-save
+
+# 删除远程备份分支
+#git push origin --delete backup/auto-save
