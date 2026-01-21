@@ -1,0 +1,18 @@
+最小化安装debian12
+
+
+#aliyun源
+deb https://mirrors.aliyun.com/debian/ bookworm main non-free non-free-firmware contrib
+deb-src https://mirrors.aliyun.com/debian/ bookworm main non-free non-free-firmware contrib
+deb https://mirrors.aliyun.com/debian-security/ bookworm-security main
+deb-src https://mirrors.aliyun.com/debian-security/ bookworm-security main
+deb https://mirrors.aliyun.com/debian/ bookworm-updates main non-free non-free-firmware contrib
+deb-src https://mirrors.aliyun.com/debian/ bookworm-updates main non-free non-free-firmware contrib
+deb https://mirrors.aliyun.com/debian/ bookworm-backports main non-free non-free-firmware contrib
+deb-src https://mirrors.aliyun.com/debian/ bookworm-backports main non-free non-free-firmware contrib
+
+#apt install --no-install-recommends xserver-xorg-core xserver-xorg-input-libinput  xinit i3-wm i3status i3lock dmenu rxvt-unicode 
+
+#echo "exec i3" > ~/.xinitrc
+
+#startx
