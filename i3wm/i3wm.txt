@@ -48,3 +48,4 @@ exec --no-startup-id fcitx5 -d
 在“当前输入法”列表中，搜索pinyin，添加到左侧。
 
 默认切换快捷键通常是 Ctrl+Space
+
