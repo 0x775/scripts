@@ -15,4 +15,36 @@ deb-src https://mirrors.aliyun.com/debian/ bookworm-backports main non-free non-
 
 #echo "exec i3" > ~/.xinitrc
 
+
 #startx
+
+
+#--------------中文输入法
+#1: 中文字体
+#sudo apt install fonts-noto-cjk
+
+#2: 最小化输入法
+#sudo apt install --no-install-recommends fcitx5 fcitx5-pinyin fcitx5-frontend-qt5 fcitx5-config-qt
+
+#3: 编辑~/.xinitrc，在exec i3 上面增加
+# 设置输入法环境变量
+export GTK_IM_MODULE=fcitx
+export QT_IM_MODULE=fcitx
+export XMODIFIERS=@im=fcitx
+export SDL_IM_MODULE=fcitx
+export GLFW_IM_MODULE=ibus
+
+exec i3
+
+第三步：设置 i3 自动启动
+你需要让 Fcitx5 在 i3 启动时自动运行。编辑 i3 的配置文件 ~/.config/i3/config，在文件末尾添加：
+exec --no-startup-id fcitx5 -d
+
+
+第四步：配置输入法
+重新启动 X 会话（退出 i3 并重新执行 startx）。
+在终端运行 fcitx5-config-tool 启动配置界面。
+
+在“当前输入法”列表中，搜索pinyin，添加到左侧。
+
+默认切换快捷键通常是 Ctrl+Space
