@@ -1,0 +1,20 @@
+[Unit]
+Description=Update /etc/issue with local IP address
+# 确保在网络在线之后运行
+After=network-online.target
+# 确保在 getty 服务启动之前运行，这样登录时才能看到
+Before=getty@tty1.service
+# 如果网络启动失败，不要阻止系统启动
+Wants=network-online.target
+
+[Service]
+Type=oneshot
+ExecStart=/usr/local/bin/update-issue.sh
+RemainAfterExit=yes
+# 允许在控制台输出错误信息以便调试
+StandardOutput=tty
+StandardError=tty
+
+[Install]
+# 让它成为 getty@tty1.service 的依赖，确保顺序
+WantedBy=getty@tty1.service
