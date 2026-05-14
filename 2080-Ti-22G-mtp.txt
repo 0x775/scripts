@@ -5,6 +5,34 @@ aria2c -x 16 -s 16  https://hf-mirror.com/froggeric/Qwen3.6-27B-MTP-GGUF/resolve
 ls
 mv b838463464b57d4e9ef078c1d2693c695c1749b8b5e75abd0543c9e0b286a730 Qwen3.6-27B-Q4_K_M-mtp.gguf
 
+------------------------ new .status .with codex ----------------------------
+git clone -b mtp-clean https://github.com/am17an/llama.cpp.git
+cd llama.cpp
+wget https://github.com/ggerganov/llama.cpp/pull/21174.patch
+#curl -L -o 21174.patch https://github.com/ggerganov/llama.cpp/pull/21174.patch
+git apply 21174.patch
+# 提交修改（可选）
+git add . && git commit -m "应用 PR #21174 修复"
+# 编译
+rm -rf build
+cmake -B build   -DGGML_CUDA=ON   -DCMAKE_BUILD_TYPE=Release   -DLLAMA_BUILD_EXAMPLES=OFF   -DLLAMA_BUILD_TESTS=OFF   -DCMAKE_CUDA_ARCHITECTURES=75
+cmake --build build --config Release -j 8
+
+./build/bin/llama-server \
+  -m ~/models/Qwen3.6-27B-Q4_K_M-mtp.gguf \
+  --host 0.0.0.0 \
+  --port 8080 \
+  -ngl 99 \
+  -np 1 \
+  -c 128000 \
+  -ctk q4_0 -ctv q4_0 \
+  --api-key sk-autodl-key \
+  --flash-attn on \
+  --spec-type draft-mtp --spec-draft-n-max 3 --spec-draft-n-min 3
+
+
+---------------------------------------
+
 
 
 git clone https://github.com/am17an/llama.cpp.git
