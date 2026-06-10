@@ -1,0 +1,249 @@
+// ==UserScript==
+// @name         抖音视频下载-精简优化版
+// @namespace    https://douyin.com/
+// @version      2.0
+// @description  拦截抖音接口，生成无水印下载链接（朴素样式）
+// @author       你
+// @match        https://www.douyin.com/*
+// @grant        GM_xmlhttpRequest
+// @run-at       document-start
+// ==/UserScript==
+
+(function () {
+  'use strict';
+
+  var videoKey="";
+  const videoUrls = [];
+
+  // ---------- 劫持 XHR ----------
+  const origOpen = XMLHttpRequest.prototype.open;
+  XMLHttpRequest.prototype.open = function (method, url, ...args) {
+    this._url = url;
+    return origOpen.call(this, method, url, ...args);
+  };
+
+  const origSend = XMLHttpRequest.prototype.send;
+  XMLHttpRequest.prototype.send = function (body) {
+    this.addEventListener('load', function () {
+      const url = this._url;
+      if (!url || !url.includes('/aweme/v1/web/aweme/detail/')) return;
+
+      try {
+        const data = JSON.parse(this.responseText);
+        const aweme = data.aweme_detail;
+        if (!aweme || !aweme.video) return;
+
+        // 按优先级取 url_list
+        let urlList = [];
+        const candidates = [aweme.video.play_addr_h264, aweme.video.play_addr_265, aweme.video.play_addr];
+        for (const candidate of candidates) {
+          if (candidate && Array.isArray(candidate.url_list) && candidate.url_list.length) {
+            urlList = candidate.url_list;
+            break;
+          }
+        }
+
+        // 去重，更新全局地址列表
+        videoUrls.length = 0;
+        videoUrls.push(...new Set(urlList.filter(u => u)));
+        drawDownloadPanel();
+      } catch (e) {
+        console.error('解析抖音视频数据失败', e);
+      }
+    });
+    return origSend.call(this, body);
+  };
+
+  // ---------- 下载面板 ----------
+  function drawDownloadPanel() {
+    const target = document.querySelector('[data-e2e="detail-video-info"]');
+    if (!target || !videoUrls.length) return;
+
+  // 如果已经插入过，先移除旧的
+  let panel = document.getElementById('tm-douyin-panel');
+  if (panel) panel.remove();
+
+  // 创建下载容器
+  panel = document.createElement('div');
+  panel.id = 'tm-douyin-panel';
+  panel.style.cssText = `
+    margin-top: 12px; padding: 10px; background: #fff; border: 1px solid #ddd;
+    border-radius: 8px; font-size: 14px;
+  `;
+  //panel.innerHTML = '<div style="font-weight:bold; margin-bottom:14px; color:#333;">视频下载链接</div>';
+      panel.innerHTML = '';
+
+// 创建标题行容器
+const titleDiv = document.createElement('div');
+titleDiv.style.cssText = 'display:flex; justify-content:space-between; align-items:center; margin-bottom:14px;';
+
+// 左侧标题文字
+const titleText = document.createElement('span');
+titleText.style.cssText = 'font-weight:bold; color:#333;';
+titleText.textContent = '视频下载链接';
+
+// 右侧上报按钮
+const reportBtn = document.createElement('span');
+reportBtn.style.cssText = 'color:#00e; cursor:pointer; font-size:13px;';
+reportBtn.textContent = '上报数据';
+
+// 上报按钮点击事件
+reportBtn.addEventListener('click', () => {
+  // 1. 提取当前页面的视频ID（连续10位以上数字）
+  const match = window.location.pathname.match(/(\d{10,})/);
+  if (!match) {
+    showToast('未检测到视频ID，上报失败', false);
+    return;
+  }
+  videoKey = match[1];
+
+  // 2. 构造上报数据
+  const postData = {
+    key: "douyin_web_"+videoKey,
+    data: JSON.stringify(videoUrls)   // 全局的视频地址数组
+  };
+
+  // 3. 发送 POST 请求（请将下方的 URL 替换为你的真实接口地址）
+  fetch('http://127.0.0.1:8080/report', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(postData)
+  })
+  .then(res => res.json())
+  .then(res => {
+    if (res.retcode === 200) {
+      showToast(videoKey+'  上报成功', true);
+    } else {
+      showToast(res.msg || '上报失败', false);
+    }
+  })
+  .catch(err => {
+    showToast('网络错误，上报失败', false);
+  });
+});
+
+// 将标题和按钮加入标题行
+titleDiv.appendChild(titleText);
+titleDiv.appendChild(reportBtn);
+
+// 将标题行插入面板
+panel.appendChild(titleDiv);
+
+
+  videoUrls.forEach((videoUrl, i) => {
+    const link = document.createElement('a');
+    link.href = '#';
+    link.textContent = `下载地址 ${i + 1}`;
+    link.style.cssText = `color:#00e; text-decoration:underline; margin:3px 0px; margin-right:20px; cursor:pointer;`;
+    link.addEventListener('click', (e) => {
+      e.preventDefault();
+      downloadWithReferer(videoUrl, `douyin_${i + 1}.mp4`, link);
+    });
+    panel.appendChild(link);
+  });
+
+  // 插入到目标元素之后
+  target.insertAdjacentElement('afterend', panel);
+  }
+
+  // ========== Toast 提示函数 ==========
+ function showToast(msg, isSuccess = false) {
+  const toast = document.createElement('div');
+  toast.textContent = msg;
+  toast.style.cssText = `
+    position: fixed; top: 20px; left: 50%; transform: translateX(-50%);
+    padding: 10px 20px; border-radius: 1px; color: #fff; font-size: 14px;
+    z-index: 999999; transition: opacity 0.5s;
+    background: ${isSuccess ? '#4caf50' : '#f44336'};
+    box-shadow: 0 2px 8px rgba(0,0,0,0.2);
+  `;
+  document.body.appendChild(toast);
+  setTimeout(() => {
+    toast.style.opacity = '0';
+    setTimeout(() => toast.remove(), 500);
+  }, 4000);
+}
+
+  // ---------- 带 Referer 的下载逻辑 ----------
+  function downloadWithReferer(videoUrl, filename, linkEl) {
+    linkEl.textContent = '⏳ 下载中...';
+    linkEl.style.color = '#999';
+    linkEl.style.pointerEvents = 'none';
+
+    GM_xmlhttpRequest({
+      method: 'GET',
+      url: videoUrl,
+      responseType: 'blob',
+      headers: { 'Referer': 'https://www.douyin.com/' },
+      onload: function (res) {
+        linkEl.textContent = linkEl.textContent.replace('⏳ 下载中...', '✅ 完成');
+        linkEl.style.color = '#00e';
+        linkEl.style.pointerEvents = 'auto';
+
+        if (res.status === 200 && res.response) {
+          const blobUrl = URL.createObjectURL(res.response);
+          const a = document.createElement('a');
+          a.href = blobUrl;
+          a.download = filename;
+          document.body.appendChild(a);
+          a.click();
+          document.body.removeChild(a);
+          URL.revokeObjectURL(blobUrl);
+        } else {
+          alert(`下载失败，状态码：${res.status}`);
+        }
+      },
+      onerror: function () {
+        linkEl.textContent = '❌ 失败';
+        linkEl.style.color = 'red';
+        linkEl.style.pointerEvents = 'auto';
+      }
+    });
+  }
+
+   //以下部分是检测模态弹窗url变化
+    /*
+    function onUrlChange() {
+        const newUrl = location.href;
+        console.log('URL 变化为:', newUrl);
+        // 在这里执行你的提取下载链接逻辑
+        // 例如重新解析 modal_id，并请求对应的视频接口
+    }
+
+    // 1. 重写 history.pushState
+    const origPushState = history.pushState;
+    history.pushState = function(...args) {
+        origPushState.apply(this, args);
+        onUrlChange();
+    };
+
+    // 2. 重写 history.replaceState
+    const origReplaceState = history.replaceState;
+    history.replaceState = function(...args) {
+        origReplaceState.apply(this, args);
+        onUrlChange();
+    };
+
+    // 3. 监听浏览器前进/后退
+    window.addEventListener('popstate', onUrlChange);
+
+    // 4. 初始加载时也触发一次（可选）
+    onUrlChange();
+   */
+
+  // ---------- 初始化（等待 body 就绪） ----------
+  function init() {
+    if (document.body) {
+      drawDownloadPanel();
+      // 监听 DOM 变化，防止 SPA 切换导致面板消失
+      new MutationObserver(() => {
+        if (!document.getElementById('tm-douyin-panel') && videoUrls.length) {
+          drawDownloadPanel();
+        }
+      }).observe(document.body, { childList: true, subtree: true });
+    } else {
+      document.addEventListener('DOMContentLoaded', init);
+    }
+  }
+  init();
+})();
