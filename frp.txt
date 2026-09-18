@@ -1,0 +1,43 @@
+frp 流程
+
+服务端
+公网服务器，开启7000,7500(web),7001(remote-port)
+sudo mkdir -p /etc/frp
+#sudo vim /etc/frp/frps.toml
+(base) root@iZuf6it1pi1waxrb2vlee3Z:/etc/frp# cat frps.toml
+# frps 监听端口（客户端连接用）
+bindPort = 7000
+# 可选：设置 Dashboard 端口和账号密码（用于监控）
+webServer.addr = "0.0.0.0"
+webServer.port = 7500
+webServer.user = "demo"
+webServer.password = "29****98a"
+# 可选：设置令牌（客户端需匹配）
+auth.token = "demo29*****98"
+
+启动容器
+docker run -d --name frps --restart always --network host -v /etc/frp/frps.toml:/etc/frp/frps.toml snowdreamtech/frps
+-----------------------------------------------------------------------------------------------------------------------
+
+android客户端
+下载apk https://github.com/sky22333/frp-android/releases/tag/v0.0.1 ,并安装
+打开软件
+配置-新建-frpc
+
+serverAddr = "101.120.xxx.xxx"
+serverPort = 7000
+auth.token = "服务端设置的令牌token"
+
+[[proxies]]
+name = "android-socks5"
+type = "tcp"
+localPort = 7001
+remotePort = 7001          # 公网服务器监听port 7001
+[proxies.plugin]
+type = "socks5"
+#username = "demo"
+#password = "123456"
+
+-----------------------------------------------
+win10测试机
+curl -x socks5h://101.120.***.***:7001 cip.cc
